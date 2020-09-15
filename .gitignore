@@ -13,6 +13,9 @@ ddtrace/internal/_rand.c
 ddtrace/internal/_queue.c
 *.so
 
+# Benchmarks
+*.pyperformance.json
+
 # Distribution / packaging
 .Python
 env/
