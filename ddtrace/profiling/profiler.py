@@ -115,10 +115,7 @@ class Profiler(object):
             default_max_events=int(os.environ.get("DD_PROFILING_MAX_EVENTS", recorder.Recorder._DEFAULT_MAX_EVENTS)),
         )
 
-        if formats.asbool(os.environ.get("DD_PROFILING_MEMALLOC", "false")):
-            mem_collector = memalloc.MemoryCollector(r)
-        else:
-            mem_collector = memory.MemoryCollector(r)
+        mem_collector = memalloc.MemoryCollector(r)
 
         self._collectors = [
             stack.StackCollector(r, tracer=self.tracer),
