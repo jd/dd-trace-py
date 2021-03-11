@@ -2,7 +2,6 @@ import flask
 import werkzeug
 
 from ddtrace import Pin
-from ddtrace import compat
 from ddtrace import config
 from ddtrace.vendor.wrapt import wrap_function_wrapper as _w
 
@@ -323,7 +322,7 @@ def traced_wsgi_app(pin, wrapped, instance, args, kwargs):
             config.flask,
             method=request.method,
             url=request.base_url,
-            query=compat.to_unicode(request.query_string),
+            query=request.query_string.decode(errors="backslash"),
             request_headers=request.headers,
         )
 

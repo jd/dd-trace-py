@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    flask: fix a bug when the query_string would contain non-Unicode characters
