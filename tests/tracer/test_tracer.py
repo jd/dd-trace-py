@@ -23,6 +23,7 @@ from ddtrace.constants import VERSION_KEY
 from ddtrace.context import Context
 from ddtrace.ext import priority
 from ddtrace.ext import system
+from ddtrace.internal import service
 from ddtrace.internal.writer import AgentWriter
 from ddtrace.internal.writer import LogWriter
 from ddtrace.settings import Config
@@ -574,7 +575,7 @@ def test_tracer_shutdown_no_timeout():
     # Do a write to start the writer.
     with t.trace("something"):
         pass
-    assert t.writer.is_alive()
+
     t.shutdown()
     t.writer.stop.assert_has_calls(
         [
@@ -661,8 +662,8 @@ def test_tracer_fork():
             # Assert we recreated the writer and have a new queue
             with capture_failures(errors):
                 assert t._pid != original_pid
-                assert t.writer != original_writer
-                assert t.writer._buffer != original_writer._buffer
+                assert t.writer is not original_writer
+                assert t.writer._buffer is not original_writer._buffer
 
         # Assert the trace got written into the correct queue
         assert len(original_writer._buffer) == 0
