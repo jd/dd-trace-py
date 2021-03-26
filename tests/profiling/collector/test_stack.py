@@ -159,16 +159,16 @@ class CollectorTest(collector.PeriodicCollector):
 def test_ignore_profiler_gevent_task(profiler):
     # This test is particularly useful with gevent enabled: create a test collector that run often and for long so we're
     # sure to catch it with the StackProfiler and that it's ignored.
-    c = CollectorTest(profiler._profiler._recorder, interval=0.00001)
+    c = CollectorTest(profiler._service._recorder, interval=0.00001)
     c.start()
     collector_thread_ids = {
         col._worker.ident
-        for col in profiler._profiler._collectors
+        for col in profiler._service._collectors
         if (isinstance(col, collector.PeriodicCollector) and col.status == service.ServiceStatus.RUNNING)
     }
     collector_thread_ids.add(c._worker.ident)
     while True:
-        events = profiler._profiler._recorder.reset()
+        events = profiler._service._recorder.reset()
         if collector_thread_ids.isdisjoint({e.task_id for e in events[stack.StackSampleEvent]}):
             break
         # Give some time for gevent to switch greenlets

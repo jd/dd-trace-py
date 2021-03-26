@@ -24,6 +24,7 @@ from ddtrace.profiling.exporter import file
 from ddtrace.profiling.exporter import http
 from ddtrace.utils import deprecation
 from ddtrace.vendor import attr
+from ddtrace.vendor.debtcollector import renames
 
 
 LOG = logging.getLogger(__name__)
@@ -51,88 +52,6 @@ def gevent_patch_all(event):
             "and is likely to break the application. Use DD_GEVENT_PATCH_ALL=true to avoid this.",
             RuntimeWarning,
         )
-
-
-class Profiler(object):
-    """Run profiling while code is executed.
-
-    Note that the whole Python process is profiled, not only the code executed. Data from all running threads are
-    caught.
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        self._profiler = _ProfilerInstance(*args, **kwargs)
-
-    def start(self, stop_on_exit=True, profile_children=True):
-        """Start the profiler.
-
-        :param stop_on_exit: Whether to stop the profiler and flush the profile on exit.
-        :param profile_children: Whether to start a profiler in child processes.
-        """
-
-        if profile_children:
-            try:
-                uwsgi.check_uwsgi(self.start, atexit=self.stop if stop_on_exit else None)
-            except uwsgi.uWSGIMasterProcess:
-                # Do nothing, the start() method will be called in each worker subprocess
-                return
-
-        self._profiler.start()
-
-        if stop_on_exit:
-            atexit.register(self.stop)
-
-        if profile_children:
-            if hasattr(os, "register_at_fork"):
-                os.register_at_fork(after_in_child=self._restart_on_fork)
-            else:
-                LOG.warning(
-                    "Your Python version does not have `os.register_at_fork`. "
-                    "You have to start a new Profiler after fork() manually."
-                )
-
-    def stop(self, flush=True):
-        """Stop the profiler.
-
-        :param flush: Flush last profile.
-        """
-        self._profiler.stop(flush)
-
-    def _restart_on_fork(self):
-        # Be sure to stop the parent first, since it might have to e.g. unpatch functions
-        # Do not flush data as we don't want to have multiple copies of the parent profile exported.
-        self.stop(flush=False)
-        self._profiler = self._profiler.copy()
-        self._profiler.start()
-
-    @property
-    def status(self):
-        return self._profiler.status
-
-    @property
-    def service(self):
-        return self._profiler.service
-
-    @property
-    def env(self):
-        return self._profiler.env
-
-    @property
-    def version(self):
-        return self._profiler.version
-
-    @property
-    def tracer(self):
-        return self._profiler.tracer
-
-    @property
-    def url(self):
-        return self._profiler.url
-
-    @property
-    def tags(self):
-        return self._profiler.tags
 
 
 ENDPOINT_TEMPLATE = "https://intake.profile.{}"
@@ -323,3 +242,18 @@ class _ProfilerInstance(service.Service):
             atexit.unregister(self.stop)
 
         super(_ProfilerInstance, self).stop()
+
+
+class Profiler(service.ServiceProcess):
+    """Run profiling while code is executed.
+
+    Note that the whole Python process is profiled, not only the code executed. Data from all running threads are
+    caught.
+
+    """
+
+    SERVICE_CLASS = _ProfilerInstance
+
+    @renames.renamed_kwarg("profile_children", "start_in_children")
+    def start(self, *args, **kwargs):
+        super(Profiler, self).start(*args, **kwargs)

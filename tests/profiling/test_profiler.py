@@ -53,7 +53,7 @@ def test_default_from_env(service_name_var, monkeypatch):
     monkeypatch.setenv("DD_API_KEY", "foobar")
     monkeypatch.setenv(service_name_var, "foobar")
     prof = profiler.Profiler()
-    for exp in prof._profiler._scheduler.exporters:
+    for exp in prof._service._scheduler.exporters:
         if isinstance(exp, http.PprofHTTPExporter):
             assert exp.service == "foobar"
             break
@@ -65,7 +65,7 @@ def test_service_api(monkeypatch):
     monkeypatch.setenv("DD_API_KEY", "foobar")
     prof = profiler.Profiler(service="foobar")
     assert prof.service == "foobar"
-    for exp in prof._profiler._scheduler.exporters:
+    for exp in prof._service._scheduler.exporters:
         if isinstance(exp, http.PprofHTTPExporter):
             assert exp.service == "foobar"
             break
@@ -77,7 +77,7 @@ def test_tracer_api(monkeypatch):
     monkeypatch.setenv("DD_API_KEY", "foobar")
     prof = profiler.Profiler(tracer=ddtrace.tracer)
     assert prof.tracer == ddtrace.tracer
-    for col in prof._profiler._collectors:
+    for col in prof._service._collectors:
         if isinstance(col, stack.StackCollector):
             assert col.tracer == ddtrace.tracer
             break
@@ -93,7 +93,7 @@ def test_env_default(monkeypatch):
     assert prof.env == "staging"
     assert prof.version == "123"
     assert prof.url is None
-    for exp in prof._profiler._scheduler.exporters:
+    for exp in prof._service._scheduler.exporters:
         if isinstance(exp, http.PprofHTTPExporter):
             assert exp.env == "staging"
             assert exp.version == "123"
@@ -107,7 +107,7 @@ def test_env_api():
     assert prof.env == "staging"
     assert prof.version == "123"
     assert prof.url is None
-    for exp in prof._profiler._scheduler.exporters:
+    for exp in prof._service._scheduler.exporters:
         if isinstance(exp, http.PprofHTTPExporter):
             assert exp.env == "staging"
             assert exp.version == "123"
@@ -122,7 +122,7 @@ def test_tags_api():
     assert prof.version == "123"
     assert prof.url is None
     assert prof.tags["foo"] == "bar"
-    for exp in prof._profiler._scheduler.exporters:
+    for exp in prof._service._scheduler.exporters:
         if isinstance(exp, http.PprofHTTPExporter):
             assert exp.env == "staging"
             assert exp.version == "123"
@@ -148,7 +148,7 @@ def test_url():
 
 
 def _check_url(prof, url, api_key=None, endpoint_path="/profiling/v1/input"):
-    for exp in prof._profiler._scheduler.exporters:
+    for exp in prof._service._scheduler.exporters:
         if isinstance(exp, http.PprofHTTPExporter):
             assert exp.api_key == api_key
             assert exp.endpoint == url

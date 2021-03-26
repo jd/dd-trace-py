@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    The Profiler is now able to restart in children process for Python < 3.7
+    automatically.
+upgrade:
+  - |
+    The Profiler will now restart in children process for Python < 3.7
+    automatically. If you're doing manual instrumentation, you can disable this
+    by calling ``Profiler().start(start_in_children=False)`` or remove you
+    manual instrumentation.
