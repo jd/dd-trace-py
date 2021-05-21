@@ -10,6 +10,8 @@ from setuptools.command.test import test as TestCommand
 from Cython.Build import cythonize  # noqa: I100
 import Cython.Distutils
 
+from setuptools_rust import Binding, RustExtension
+
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -201,7 +203,10 @@ setup(
             "Programming Language :: Python :: 3.9",
         ],
         use_scm_version=True,
-        setup_requires=["setuptools_scm[toml]>=4", "cython"],
+        setup_requires=["setuptools_scm[toml]>=4", "cython", "setuptools-rust"],
+        rust_extensions=[
+            RustExtension("ddtrace._ddtrace", "ddtrace/internal/rust/Cargo.toml", binding=Binding.PyO3),
+        ],
         ext_modules=ext_modules
         + cythonize(
             [

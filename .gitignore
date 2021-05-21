@@ -106,3 +106,5 @@ ENV/
 
 # VS Code
 .vscode/
+
+ddtrace/internal/rust/Cargo.lock
