@@ -12,6 +12,7 @@ from six.moves import http_client
 import tenacity
 
 import ddtrace
+from . import http_shared
 from ddtrace.internal import agent
 from ddtrace.internal import runtime
 from ddtrace.internal.runtime import container
@@ -49,7 +50,7 @@ class PprofHTTPExporter(pprof.PprofExporter):
     max_retry_delay = attr.ib(default=None)
     _container_info = attr.ib(factory=container.get_container_info, repr=False)
     _retry_upload = attr.ib(init=False, eq=False)
-    endpoint_path = attr.ib(default="/profiling/v1/input")
+    endpoint_path = attr.ib(default="profiling/v1/input")
 
     def __attrs_post_init__(self):
         if self.max_retry_delay is None:
@@ -180,12 +181,10 @@ class PprofHTTPExporter(pprof.PprofExporter):
         self._retry_upload(self._upload_once, client, path, body, headers)
 
     def _upload_once(self, client, path, body, headers):
-        try:
-            client.request("POST", path, body=body, headers=headers)
-            response = client.getresponse()
-            response.read()  # reading is mandatory
-        finally:
-            client.close()
+        response = http_shared.send(self.endpoint + "/" + self.endpoint_path, self.api_key, body, int(self.timeout * 1000))
+
+        if response.status == 999:
+            raise OSError("HTTP failure %d" % response.status)
 
         if 200 <= response.status < 300:
             return
@@ -202,3 +201,27 @@ class PprofHTTPExporter(pprof.PprofExporter):
             )
 
         raise exporter.ExportError("HTTP Error %d" % response.status)
+
+    # def _upload_once(self, client, path, body, headers):
+    #     try:
+    #         client.request("POST", path, body=body, headers=headers)
+    #         response = client.getresponse()
+    #         response.read()  # reading is mandatory
+    #     finally:
+    #         client.close()
+
+    #     if 200 <= response.status < 300:
+    #         return
+
+    #     if 500 <= response.status < 600:
+    #         raise tenacity.TryAgain
+
+    #     if response.status == 400:
+    #         raise exporter.ExportError("Server returned 400, check your API key")
+    #     elif response.status == 404 and not self.api_key:
+    #         raise exporter.ExportError(
+    #             "Datadog Agent is not accepting profiles. "
+    #             "Agent-based profiling deployments require Datadog Agent >= 7.20"
+    #         )
+
+    #     raise exporter.ExportError("HTTP Error %d" % response.status)

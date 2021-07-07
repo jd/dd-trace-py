@@ -46,7 +46,9 @@ class _APIEndpointRequestHandlerTest(BaseHTTPServer.BaseHTTPRequestHandler):
         )
 
     def do_POST(self):
-        assert self.path.startswith(self.path_prefix)
+        if not self.path.startswith(self.path_prefix):
+            self.send_error(400, "Wrong path")
+            return
         api_key = self.headers["DD-API-KEY"]
         if api_key != _API_KEY:
             self.send_error(400, "Wrong API Key")

@@ -203,7 +203,11 @@ setup(
     use_scm_version=True,
     setup_requires=["setuptools_scm[toml]>=4", "cython", "setuptools-rust"],
     rust_extensions=[
-        RustExtension("ddtrace._ddtrace", "ddtrace/internal/rust/Cargo.toml", binding=Binding.PyO3),
+        RustExtension(
+            "ddtrace.profiling.exporter.http_shared",
+            "ddtrace/profiling/exporter/http_shared/Cargo.toml",
+            binding=Binding.PyO3,
+        ),
     ],
     ext_modules=ext_modules
     + cythonize(

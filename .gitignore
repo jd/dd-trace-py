@@ -107,4 +107,4 @@ ENV/
 # VS Code
 .vscode/
 
-ddtrace/internal/rust/Cargo.lock
+ddtrace/profiling/exporter/http_shared/Cargo.lock
